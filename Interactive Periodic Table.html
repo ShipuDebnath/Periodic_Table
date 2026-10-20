@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Interactive Periodic Table</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600&display=swap">
+<style>
+:root{--bg:#f3f5fa;--panel:#fff;--text:#16202e;--muted:#5d6b7e;--accent:#2f6df6;--border:#d9e0ec;--na:#e3e8f0;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0c1119;--panel:#151c29;--text:#e8edf6;--muted:#9aa7bb;--accent:#6c9bff;--border:#273247;--na:#222c3d;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0c1119;--panel:#151c29;--text:#e8edf6;--muted:#9aa7bb;--accent:#6c9bff;--border:#273247;--na:#222c3d;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font:15px/1.55 "Hind Siliguri",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.en{color:var(--muted);font-size:.92em}
+.app{max-width:1280px;margin:0 auto;padding:14px;display:flex;flex-direction:column;gap:10px}
+h1{font-size:1.3rem;margin:0}.sub{color:var(--muted);font-size:.85rem;margin:2px 0 0}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.lbl{font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-right:2px}
+.grp{display:flex;flex-wrap:wrap;gap:3px;background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:3px}
+button{font:inherit;font-size:.82rem;color:var(--text);background:transparent;border:0;border-radius:9px;padding:6px 11px;cursor:pointer}
+button:hover{background:color-mix(in srgb,var(--accent) 12%,transparent)}button.on{background:var(--accent);color:#fff}
+input[type=search]{font:inherit;font-size:.85rem;color:var(--text);background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:7px 12px;width:200px}
+#note{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:10px 14px;font-size:.88rem}
+.chip{display:inline-block;margin:6px 6px 0 0;padding:2px 10px;border-radius:99px;font-size:.78rem;background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent);font-weight:600}
+#lg{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:.78rem;min-height:30px}
+.li{display:flex;align-items:center;gap:6px;padding:3px 10px;border-radius:99px;border:1px solid var(--border);background:var(--panel);cursor:pointer;transition:.2s}
+.li:hover,.li.on{border-color:var(--accent);transform:translateY(-1px)}.li i{width:12px;height:12px;border-radius:4px}
+.bar{height:12px;width:240px;border-radius:6px;background:linear-gradient(90deg,#440154,#3b528b,#21918c,#5ec962,#fde725)}
+.wrap{overflow-x:auto;padding:6px 2px 14px}
+#tbl{display:grid;grid-template-columns:22px repeat(18,minmax(46px,1fr));grid-template-rows:20px repeat(7,auto) 12px repeat(2,auto);gap:4px;min-width:900px}
+.gh,.ph{font-size:.7rem;color:var(--muted);display:flex;align-items:center;justify-content:center}
+.t{position:relative;aspect-ratio:1/1.08;border:0;border-radius:9px;padding:3px 2px;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1;background:var(--b);color:var(--f);
+ transition:transform .2s,background .45s,color .45s,opacity .35s,filter .35s,box-shadow .2s;animation:pop .55s cubic-bezier(.2,.9,.3,1.2) var(--d) backwards}
+.t i{position:absolute;top:3px;left:5px;font-size:.6rem;font-style:normal;opacity:.8}
+.t b{font-size:clamp(.95rem,1.7vw,1.35rem)}.t s{text-decoration:none;font-size:.58rem;opacity:.9;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.t:hover{transform:scale(1.2);z-index:4;box-shadow:0 10px 26px rgba(0,0,0,.4);background:var(--b)}
+.t.rel{box-shadow:0 0 0 2px var(--accent)}.t.off{opacity:.13;filter:grayscale(1)}.t.na{background:var(--na);color:var(--muted)}
+#tbl.go .t{animation:none}
+#tbl .t.sel{z-index:3;animation:pulse 1.6s ease-in-out infinite;outline:3px solid var(--text)}
+#tbl .t.wave{animation:wave .6s ease var(--wd)}
+@keyframes pop{from{opacity:0;transform:scale(.4) translateY(10px)}}
+@keyframes wave{40%{transform:scale(1.15);filter:brightness(1.3)}}
+@keyframes pulse{50%{box-shadow:0 0 22px 4px var(--accent)}}
+@media(max-width:900px){.t s{display:none}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+#dr{position:fixed;top:0;right:0;bottom:0;width:min(410px,100%);background:var(--panel);border-left:1px solid var(--border);box-shadow:-12px 0 40px rgba(0,0,0,.3);transform:translateX(106%);transition:transform .45s cubic-bezier(.2,.9,.3,1);overflow:auto;padding:calc(16px + env(safe-area-inset-top,0px)) 18px calc(20px + env(safe-area-inset-bottom,0px));z-index:20}
+#dr.open{transform:none}
+#cl{position:absolute;top:calc(8px + env(safe-area-inset-top,0px));right:10px;font-size:1.1rem}
+.hd{display:flex;gap:14px;align-items:center}.big{position:relative;width:92px;height:98px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:2.4rem;font-weight:700;flex:none;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+.big i{position:absolute;top:6px;left:9px;font-size:.8rem;font-style:normal;font-weight:400}
+.hd h2{margin:0;font-size:1.4rem}
+#bohr{width:260px;height:260px;display:block;margin:8px auto 0}
+.sh{text-align:center;font-size:.8rem;color:var(--muted);margin-bottom:8px}
+dl{display:grid;grid-template-columns:auto 1fr;gap:5px 14px;font-size:.85rem;margin:8px 0}dt{color:var(--muted)}dd{margin:0}
+.m{display:grid;grid-template-columns:96px 1fr 84px;gap:8px;align-items:center;font-size:.8rem;margin:7px 0}
+.m div.tr{height:8px;border-radius:4px;background:var(--na);overflow:hidden}.m div.tr u{display:block;height:100%;width:0;border-radius:4px;background:var(--accent);transition:width .8s cubic-bezier(.2,.9,.3,1)}
+.m span:last-child{text-align:right;font-variant-numeric:tabular-nums}
+.warn{font-size:.78rem;background:color-mix(in srgb,#f59e0b 18%,transparent);border-radius:10px;padding:6px 10px;margin:8px 0}
+.orb{display:flex;flex-wrap:wrap;gap:8px 14px;margin:8px 0}.or{display:flex;align-items:center;gap:2px;font-size:.75rem}.or b{width:24px;color:var(--muted);font-weight:600}
+.bx{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border:1.5px solid var(--border);border-radius:5px;font-size:.78rem;letter-spacing:-2px;font-weight:700}
+.bx.o2{background:color-mix(in srgb,var(--accent) 18%,transparent);border-color:var(--accent)}.bx.o1{background:color-mix(in srgb,#f59e0b 24%,transparent);border-color:#f59e0b}
+.hn{font-size:.78rem;margin:6px 0}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="row" style="justify-content:space-between">
+    <div><h1 id="ttl"></h1><p class="sub" id="sb"></p></div>
+    <div class="grp" id="gL"></div>
+  </div>
+  <div class="row"><span class="lbl" id="l1"></span><div class="grp" id="gM"></div></div>
+  <div class="row"><span class="lbl" id="l2"></span><div class="grp" id="gH"></div><input id="q" type="search" autocomplete="off"></div>
+  <div id="note"></div>
+  <div id="lg"></div>
+  <div class="wrap"><div id="tbl"></div></div>
+</div>
+<aside id="dr" aria-live="polite"></aside>
+<script>
+const $=s=>document.querySelector(s);
+const S={lang:"both",mode:"cat",hl:"all",iso:null,q:"",sel:0};
+const T=(bn,en,blk)=>S.lang=="bn"?bn:S.lang=="en"?en:(blk?bn+'<br><span class="en">'+en+'</span>':bn+" · "+en);
+
+/* Sym|Name|Mass|Pauling EN|Covalent radius pm (Cordero)|IE1 kJ/mol|EA kJ/mol|Melting point K */
+const RAW=`H|Hydrogen|1.008|2.20|31|1312|72.8|13.99
+He|Helium|4.0026||28|2372|||
+Li|Lithium|6.94|0.98|128|520.2|59.6|453.65
+Be|Beryllium|9.0122|1.57|96|899.5||1560
+B|Boron|10.81|2.04|84|800.6|27.0|2349
+C|Carbon|12.011|2.55|76|1086.5|121.8|3823
+N|Nitrogen|14.007|3.04|71|1402.3||63.15
+O|Oxygen|15.999|3.44|66|1313.9|141.0|54.36
+F|Fluorine|18.998|3.98|57|1681.0|328.2|53.48
+Ne|Neon|20.180||58|2080.7||24.56
+Na|Sodium|22.990|0.93|166|495.8|52.9|370.87
+Mg|Magnesium|24.305|1.31|141|737.7||923
+Al|Aluminium|26.982|1.61|121|577.5|42.5|933.47
+Si|Silicon|28.085|1.90|111|786.5|134.1|1687
+P|Phosphorus|30.974|2.19|107|1011.8|72.0|317.3
+S|Sulfur|32.06|2.58|105|999.6|200.4|388.36
+Cl|Chlorine|35.45|3.16|102|1251.2|348.6|171.6
+Ar|Argon|39.948||106|1520.6||83.8
+K|Potassium|39.098|0.82|203|418.8|48.4|336.53
+Ca|Calcium|40.078|1.00|176|589.8|2.37|1115
+Sc|Scandium|44.956|1.36|170|633.1|18.1|1814
+Ti|Titanium|47.867|1.54|160|658.8|7.6|1941
+V|Vanadium|50.942|1.63|153|650.9|50.6|2183
+Cr|Chromium|51.996|1.66|139|652.9|64.3|2180
+Mn|Manganese|54.938|1.55|139|717.3||1519
+Fe|Iron|55.845|1.83|132|762.5|14.6|1811
+Co|Cobalt|58.933|1.88|126|760.4|63.7|1768
+Ni|Nickel|58.693|1.91|124|737.1|112|1728
+Cu|Copper|63.546|1.90|132|745.5|119.2|1357.77
+Zn|Zinc|65.38|1.65|122|906.4||692.68
+Ga|Gallium|69.723|1.81|122|578.8|41|302.91
+Ge|Germanium|72.630|2.01|120|762.0|119|1211.4
+As|Arsenic|74.922|2.18|119|947.0|78|1090
+Se|Selenium|78.971|2.55|120|941.0|195|453
+Br|Bromine|79.904|2.96|120|1139.9|324.6|265.8
+Kr|Krypton|83.798|3.00|116|1350.8||115.78
+Rb|Rubidium|85.468|0.82|220|403.0|46.9|312.46
+Sr|Strontium|87.62|0.95|195|549.5|5.03|1050
+Y|Yttrium|88.906|1.22|190|600|29.6|1799
+Zr|Zirconium|91.224|1.33|175|640.1|41.1|2128
+Nb|Niobium|92.906|1.6|164|652.1|86.1|2750
+Mo|Molybdenum|95.95|2.16|154|684.3|71.9|2896
+Tc|Technetium|98|1.9|147|702|53|2430
+Ru|Ruthenium|101.07|2.2|146|710.2|101.3|2607
+Rh|Rhodium|102.91|2.28|142|719.7|109.7|2237
+Pd|Palladium|106.42|2.20|139|804.4|53.7|1828
+Ag|Silver|107.87|1.93|145|731.0|125.6|1234.93
+Cd|Cadmium|112.41|1.69|144|867.8||594.22
+In|Indium|114.82|1.78|142|558.3|37.4|429.75
+Sn|Tin|118.71|1.96|139|708.6|107.3|505.08
+Sb|Antimony|121.76|2.05|139|834|101|903.78
+Te|Tellurium|127.60|2.1|138|869.3|190.2|722.66
+I|Iodine|126.90|2.66|139|1008.4|295.2|386.85
+Xe|Xenon|131.29|2.6|140|1170.4||161.4
+Cs|Caesium|132.91|0.79|244|375.7|45.5|301.59
+Ba|Barium|137.33|0.89|215|502.9|13.95|1000
+La|Lanthanum|138.91|1.10|207|538.1|48|1193
+Ce|Cerium|140.12|1.12|204|534.4||1068
+Pr|Praseodymium|140.91|1.13|203|527||1208
+Nd|Neodymium|144.24|1.14|201|533.1||1297
+Pm|Promethium|145|1.13|199|540||1315
+Sm|Samarium|150.36|1.17|198|544.5||1345
+Eu|Europium|151.96|1.2|198|547.1||1099
+Gd|Gadolinium|157.25|1.2|196|593.4||1585
+Tb|Terbium|158.93|1.2|194|565.8||1629
+Dy|Dysprosium|162.50|1.22|192|573.0||1680
+Ho|Holmium|164.93|1.23|192|581.0||1734
+Er|Erbium|167.26|1.24|189|589.3||1802
+Tm|Thulium|168.93|1.25|190|596.7||1818
+Yb|Ytterbium|173.05|1.1|187|603.4||1097
+Lu|Lutetium|174.97|1.27|187|523.5||1925
+Hf|Hafnium|178.49|1.3|175|658.5||2506
+Ta|Tantalum|180.95|1.5|170|761|31|3290
+W|Tungsten|183.84|2.36|162|770|78.6|3695
+Re|Rhenium|186.21|1.9|151|760|14.5|3459
+Os|Osmium|190.23|2.2|144|840|106|3306
+Ir|Iridium|192.22|2.20|141|880|151|2739
+Pt|Platinum|195.08|2.28|136|870|205.3|2041.4
+Au|Gold|196.97|2.54|136|890.1|222.8|1337.33
+Hg|Mercury|200.59|2.00|132|1007.1||234.32
+Tl|Thallium|204.38|1.62|145|589.4|36.4|577
+Pb|Lead|207.2|2.33|146|715.6|35.1|600.61
+Bi|Bismuth|208.98|2.02|148|703|91.2|544.7
+Po|Polonium|209|2.0|140|812.1|183|527
+At|Astatine|210|2.2|150|899||
+Rn|Radon|222|2.2|150|1037||202
+Fr|Francium|223|0.7|260|393|46.9|
+Ra|Radium|226|0.9|221|509.3|9.65|973
+Ac|Actinium|227|1.1|215|499||1323
+Th|Thorium|232.04|1.3|206|587||2115
+Pa|Protactinium|231.04|1.5|200|568||1841
+U|Uranium|238.03|1.38|196|597.6||1405.3
+Np|Neptunium|237|1.36|190|604.5||917
+Pu|Plutonium|244|1.28|187|584.7||912.5
+Am|Americium|243|1.13|180|578||1449
+Cm|Curium|247|1.28|169|581||1613
+Bk|Berkelium|247|1.3||601||1259
+Cf|Californium|251|1.3||608||1173
+Es|Einsteinium|252|1.3||619||1133
+Fm|Fermium|257|1.3||627||
+Md|Mendelevium|258|1.3||635||
+No|Nobelium|259|1.3||642||
+Lr|Lawrencium|266|1.3||478.6||
+Rf|Rutherfordium|267||||||
+Db|Dubnium|268||||||
+Sg|Seaborgium|269||||||
+Bh|Bohrium|270||||||
+Hs|Hassium|277||||||
+Mt|Meitnerium|278||||||
+Ds|Darmstadtium|281||||||
+Rg|Roentgenium|282||||||
+Cn|Copernicium|285||||||
+Nh|Nihonium|286||||||
+Fl|Flerovium|289||||||
+Mc|Moscovium|290||||||
+Lv|Livermorium|293||||||
+Ts|Tennessine|294||||||
+Og|Oganesson|294||||||`;
+const nv=x=>x===""||x===undefined?null:+x;
+const EL=RAW.split("\n").map((l,i)=>{const[s,n,m,e,r,ie,ea,mp]=l.split("|"),z=i+1;return{z,s,n,m:+m,eneg:nv(e),rad:nv(r),ie:nv(ie),ea:nv(ea),mp:nv(mp)}});
+
+/* position, category, state, block, valence */
+function pos(z){if(z==1)return[1,1];if(z==2)return[1,18];if(z<=4)return[2,z-2];if(z<=10)return[2,z+8];if(z<=12)return[3,z-10];if(z<=18)return[3,z];if(z<=36)return[4,z-18];if(z<=54)return[5,z-36];
+ if(z<=56)return[6,z-54];if(z<=70)return[9,z-54];if(z==71)return[6,3];if(z<=86)return[6,z-68];if(z<=88)return[7,z-86];if(z<=102)return[10,z-86];if(z==103)return[7,3];return[7,z-100]}
+const IN=(a,z)=>a.includes(z);
+function catOf(z){return IN([3,11,19,37,55,87],z)?"alk":IN([4,12,20,38,56,88],z)?"ae":IN([2,10,18,36,54,86,118],z)?"ng":IN([9,17,35,53,85,117],z)?"hal":IN([5,14,32,33,51,52],z)?"md":z>=57&&z<=71?"lan":z>=89&&z<=103?"act":(z>=21&&z<=30||z>=39&&z<=48||z>=72&&z<=80||z>=104&&z<=112)?"tm":IN([13,31,49,50,81,82,83,84,113,114,115,116],z)?"pt":"nm"}
+EL.forEach(e=>{const[r,c]=pos(e.z);e.row=r;e.col=c;e.per=r>7?r-3:r;e.grp=r>7?null:c;e.cat=catOf(e.z);
+ e.st=IN([1,2,7,8,9,10,17,18,36,54,86],e.z)?"gas":IN([35,80],e.z)?"liq":e.z>=104?"unk":"sol";
+ e.blk=r>7?"f":(c<=2||e.z==2)?"s":c>=13?"p":"d";e.val=e.z==2?2:(r<=7&&c<=2)?c:(r<=7&&c>=13)?c-10:null;
+ e.rad_=e.z==43||e.z==61||e.z>=84})
+const CATS={alk:["ক্ষার ধাতু","Alkali metals","#ef5b5b"],ae:["ক্ষারীয় মৃত্তিকা ধাতু","Alkaline earth","#f59e42"],tm:["ট্রানজিশন ধাতু","Transition metals","#f4cf47"],pt:["অন্যান্য ধাতু","Post-transition","#7fcf6b"],md:["ধাতুকল্প","Metalloids","#39b99a"],nm:["অধাতু","Reactive non-metals","#4aa3e0"],hal:["হ্যালোজেন","Halogens","#7d7be8"],ng:["নিষ্ক্রিয় গ্যাস","Noble gases","#b46ce0"],lan:["ল্যান্থানাইড","Lanthanides","#e46fb1"],act:["অ্যাক্টিনাইড","Actinides","#c9847a"]};
+const DC={cat:CATS,blk:{s:["s-ব্লক","s-block","#ef5b5b"],p:["p-ব্লক","p-block","#4aa3e0"],d:["d-ব্লক","d-block","#f4cf47"],f:["f-ব্লক","f-block","#b46ce0"]},
+ state:{sol:["কঠিন","Solid","#8a94a6"],liq:["তরল","Liquid","#3fbf8f"],gas:["গ্যাস","Gas","#4aa3e0"],unk:["অজানা","Unknown","#cbd2dc"]},
+ val:Object.fromEntries([1,2,3,4,5,6,7,8].map(v=>[v,[""+v,""+v,vir((v-1)/7)]]))};
+const MODES={cat:["শ্রেণি","Category"],blk:["ব্লক","Block"],state:["অবস্থা (২৫°C)","State (25 °C)"],val:["যোজ্যতা ইলেকট্রন","Valence e⁻"],rad:["ব্যাসার্ধ","Radius"],ie:["আয়নিকরণ শক্তি","Ionisation energy"],eneg:["তড়িৎ ঋণাত্মকতা","Electronegativity"],ea:["ইলেকট্রন আসক্তি","Electron affinity"],mp:["গলনাঙ্ক","Melting point"]};
+const UN={rad:"pm",ie:"kJ/mol",eneg:"",ea:"kJ/mol",mp:"K"};
+const NOTE={
+ cat:["রং দেখে মৌলের পরিবার চেনা যায়। ধাতুকল্পের ‘সিঁড়ি’ ধাতু ও অধাতুকে আলাদা করেছে।","Colours show element families. The metalloid ‘staircase’ separates metals from non-metals."],
+ blk:["শেষ ইলেকট্রন যে উপস্তরে ঢোকে সেটিই ব্লক: s, p, d বা f।","The block is the subshell that receives the last electron: s, p, d or f."],
+ state:["২৫°C তাপমাত্রায় ১১টি গ্যাস ও ২টি তরল (Br, Hg); Z ≥ ১০৪ অজানা।","At 25 °C there are 11 gases and 2 liquids (Br, Hg); Z ≥ 104 are unknown."],
+ val:["মুখ্য গ্রুপে যোজ্যতা ইলেকট্রন = গ্রুপ নম্বর (১, ২) বা গ্রুপ − ১০ (১৩–১৮)। ট্রানজিশন ধাতুতে পরিবর্তনশীল।","In main groups, valence electrons = group number (1, 2) or group − 10 (13–18). Transition metals vary."],
+ rad:["পর্যায়ে বাম→ডানে কমে (কেন্দ্রকের টান বাড়ে); গ্রুপে উপর→নিচে বাড়ে (শক্তিস্তর বাড়ে)।","Shrinks across a period (stronger nuclear pull) and grows down a group (extra shells). Covalent radii (Cordero 2008); no data beyond Cm."],
+ ie:["পর্যায়ে ডানে বাড়ে, গ্রুপে নিচে কমে। Be→B ও N→O-তে সামান্য পতন ব্যতিক্রম।","Rises across a period, falls down a group. Small dips at B and O are classic exceptions. First ionisation energy."],
+ eneg:["পর্যায়ে ডানে বাড়ে, গ্রুপে নিচে কমে। ফ্লুরিন সর্বোচ্চ (৩.৯৮)।","Rises across, falls down a group; fluorine is highest (3.98). Pauling scale; blank where undefined."],
+ ea:["পর্যায়ে সাধারণত ডানে বাড়ে, হ্যালোজেনে সর্বোচ্চ। ব্যতিক্রম: Cl > F (F-এর ছোট 2p উপস্তরে ইলেকট্রন-বিকর্ষণ)।","Generally rises across a period, peaking at the halogens. Cl > F because of electron repulsion in F’s tiny 2p shell. Blank where the anion is unbound (≈ 0)."],
+ mp:["সরল প্রবণতা নেই: বন্ধন-শক্তির কারণে মাঝের দিকে (C, W) সর্বোচ্চ, দুই প্রান্তে কম।","No simple trend: peaks mid-table (C, W) where bonding is strongest; low at both ends."]};
+const TR={rad:[-1,1],ie:[1,-1],eneg:[1,-1],ea:[1,-1]};
+const HL={all:["সব","All",()=>1],metal:["ধাতু","Metals",e=>"alk,ae,tm,pt,lan,act".includes(e.cat)],md:["ধাতুকল্প","Metalloids",e=>e.cat=="md"],nonmetal:["অধাতু","Non-metals",e=>"nm,hal,ng".includes(e.cat)],gas:["গ্যাস","Gases",e=>e.st=="gas"],liq:["তরল","Liquids",e=>e.st=="liq"],sol:["কঠিন","Solids",e=>e.st=="sol"],rad:["তেজস্ক্রিয়","Radioactive",e=>e.rad_]};
+
+/* colour helpers */
+function vir(t){const s=[[68,1,84],[59,82,139],[33,145,140],[94,201,98],[253,231,37]],x=Math.max(0,Math.min(1,t))*4,i=Math.min(3,Math.floor(x)),f=x-i,c=s[i].map((v,k)=>Math.round(v+(s[i+1][k]-v)*f));return"#"+c.map(v=>v.toString(16).padStart(2,"0")).join("")}
+function fg(hex){const n=parseInt(hex.slice(1),16),l=(.299*(n>>16)+.587*(n>>8&255)+.114*(n&255))/255;return l>.6?"#111":"#fff"}
+const RNG={};["rad","ie","eneg","ea","mp"].forEach(k=>{const v=EL.map(e=>e[k]).filter(x=>x!=null);RNG[k]=[Math.min(...v),Math.max(...v)]});
+const fmt=v=>v>=100?Math.round(v)+"":v>=10?v.toFixed(1):v.toFixed(2);
+function dval(e){const m=S.mode;return m=="cat"?e.cat:m=="blk"?e.blk:m=="state"?e.st:m=="val"?e.val:null}
+function color(e){const m=S.mode;if(DC[m]){const v=dval(e);return v==null?null:DC[m][v][2]}const v=e[m];if(v==null)return null;const[a,b]=RNG[m];return vir((v-a)/(b-a))}
+
+/* electron configuration */
+const ORD=["1s","2s","2p","3s","3p","4s","3d","4p","5s","4d","5p","6s","4f","5d","6p","7s","5f","6d","7p"],CAP={s:2,p:6,d:10,f:14};
+const OV={24:{"3d":5,"4s":1},29:{"3d":10,"4s":1},41:{"4d":4,"5s":1},42:{"4d":5,"5s":1},44:{"4d":7,"5s":1},45:{"4d":8,"5s":1},46:{"4d":10,"5s":0},47:{"4d":10,"5s":1},57:{"4f":0,"5d":1},58:{"4f":1,"5d":1},64:{"4f":7,"5d":1},78:{"4f":14,"5d":9,"6s":1},79:{"4f":14,"5d":10,"6s":1},89:{"5f":0,"6d":1},90:{"5f":0,"6d":2},91:{"5f":2,"6d":1},92:{"5f":3,"6d":1},93:{"5f":4,"6d":1},96:{"5f":7,"6d":1},103:{"5f":14,"6d":0,"7p":1}};
+function conf(z){let r=z;const o={};ORD.forEach(k=>{const c=Math.min(r,CAP[k[1]]);o[k]=c;r-=c});return Object.assign(o,OV[z]||{})}
+const SUP="⁰¹²³⁴⁵⁶⁷⁸⁹",sup=n=>(""+n).split("").map(d=>SUP[d]).join("");
+function confStr(z){const o=conf(z),cores=[[86,"Rn",14],[54,"Xe",10],[36,"Kr",7],[18,"Ar",4],[10,"Ne",2],[2,"He",0]],c=cores.find(c=>z>c[0]);
+ const skip=new Set(c?ORD.slice(0,c[2]+1):[]);
+ const parts=Object.keys(o).filter(k=>o[k]>0&&!skip.has(k)).sort((a,b)=>a[0]-b[0]||"spdf".indexOf(a[1])-"spdf".indexOf(b[1])).map(k=>k+sup(o[k]));
+ return(c?"["+c[1]+"] ":"")+parts.join(" ")}
+function shells(z){const o=conf(z),s=[];Object.keys(o).forEach(k=>{if(!o[k])return;s[+k[0]-1]=(s[+k[0]-1]||0)+o[k]});return s.map(x=>x||0)}
+
+/* orbital occupancy: Pauli (max 2, opposite spins) + Hund (single first, pair when forced) */
+function occ(n,q,i){return n<=q?(i<n?1:0):(i<n-q?2:1)}
+function units(z){const o=conf(z),s=[];Object.keys(o).filter(k=>o[k]>0).sort((a,b)=>a[0]-b[0]||"spdf".indexOf(a[1])-"spdf".indexOf(b[1])).forEach(k=>{const q=2*"spdf".indexOf(k[1])+1,sh=+k[0]-1;s[sh]=s[sh]||[];for(let i=0;i<q;i++){const c=occ(o[k],q,i);if(c)s[sh].push(c)}});return s}
+function orbHTML(z){const o=conf(z),cores=[[86,14],[54,10],[36,7],[18,4],[10,2],[2,0]],cr=cores.find(c=>z>c[0]),skip=new Set(cr?ORD.slice(0,cr[2]+1):[]);let un=0;
+ const rows=Object.keys(o).filter(k=>o[k]>0&&!skip.has(k)).sort((a,b)=>a[0]-b[0]||"spdf".indexOf(a[1])-"spdf".indexOf(b[1])).map(k=>{const q=2*"spdf".indexOf(k[1])+1;let bx="";for(let i=0;i<q;i++){const c=occ(o[k],q,i);if(c==1)un++;bx+=`<span class="bx o${c}">${c==2?"↑↓":c==1?"↑":""}</span>`}return`<div class="or"><b>${k}</b>${bx}</div>`}).join("");
+ return`<div class="orb">${rows}</div><div class="hn">${T("অযুগ্ম ইলেকট্রন","Unpaired electrons")}: <b>${un}</b> — ${un?T("প্যারাম্যাগনেটিক (চুম্বকে আকৃষ্ট)","paramagnetic (attracted to a magnet)"):T("ডায়াম্যাগনেটিক (সব ইলেকট্রন জোড়ায়)","diamagnetic (all electrons paired)")}</div>
+ <div class="en" style="font-size:.76rem">${T("প্রতিটি ঘর একটি অরবিটাল। এক অরবিটালে সর্বোচ্চ ২টি ইলেকট্রন থাকে, বিপরীত স্পিনে (পাউলির নীতি)। সমশক্তির অরবিটালে আগে একটি করে ইলেকট্রন বসে, বাধ্য হলেই জোড় বাঁধে (হুন্ডের নিয়ম)। অ্যানিমেশনে জোড়া = ● ↑ ও ○ ↓ একসঙ্গে ঘোরে; একক জ্বলজ্বলে বিন্দু = অযুগ্ম।","Each box is one orbital: at most 2 electrons, with opposite spins (Pauli). Electrons enter empty orbitals singly first and pair only when forced (Hund). In the animation, a pair = ● ↑ and ○ ↓ moving together; a single pulsing dot = unpaired.",1)}</div>`}
+/* build table */
+const tbl=$("#tbl");
+for(let c=1;c<=18;c++){const h=document.createElement("div");h.className="gh";h.textContent=c;h.style.gridArea=`1/${c+1}`;tbl.appendChild(h)}
+for(let r=1;r<=7;r++){const h=document.createElement("div");h.className="ph";h.textContent=r;h.style.gridArea=`${r+1}/1`;tbl.appendChild(h)}
+const TILES=EL.map(e=>{const b=document.createElement("button");b.className="t";b.style.gridArea=`${e.row+1}/${e.col+1}`;b.style.setProperty("--d",(e.col*22+e.row*40)+"ms");b.setAttribute("aria-label",e.n);
+ b.innerHTML=`<i>${e.z}</i><b>${e.s}</b><s></s>`;b.onclick=()=>openEl(e.z);
+ b.onmouseenter=()=>TILES.forEach((t,j)=>t.classList.toggle("rel",j!=e.z-1&&(EL[j].per==e.per&&EL[j].row==e.row||(e.grp&&EL[j].grp==e.grp)))) ;
+ b.onmouseleave=()=>TILES.forEach(t=>t.classList.remove("rel"));tbl.appendChild(b);return b});
+setTimeout(()=>tbl.classList.add("go"),1800);tbl.addEventListener("animationend",ev=>ev.target.classList.remove("wave"));
+
+/* render */
+function btns(el,items,on,fn){el.innerHTML="";items.forEach(([k,t])=>{const b=document.createElement("button");b.innerHTML=t;b.className=on(k)?"on":"";b.onclick=()=>fn(k);el.appendChild(b)})}
+function topbar(){
+ $("#ttl").innerHTML=T("ইন্টারঅ্যাকটিভ পর্যায় সারণি","Interactive Periodic Table");
+ $("#sb").innerHTML=T("৩ নম্বর গ্রুপে Lu ও Lr (IUPAC)। যেকোনো মৌলে ক্লিক করুন।","IUPAC layout (Lu, Lr in group 3). Click any element.");
+ $("#l1").innerHTML=T("রঙ অনুযায়ী","Colour by");$("#l2").innerHTML=T("হাইলাইট","Highlight");
+ $("#q").placeholder=S.lang=="bn"?"নাম/প্রতীক/সংখ্যা":"Name / symbol / number";
+ btns($("#gL"),[["bn","বাংলা"],["en","English"],["both","বাংলা + English"]],k=>S.lang==k,k=>{S.lang=k;S.iso=null;topbar();draw();if(S.sel)openEl(S.sel,1)});
+ btns($("#gM"),Object.keys(MODES).map(k=>[k,T(...MODES[k])]),k=>S.mode==k,k=>{S.mode=k;S.iso=null;topbar();draw()});
+ btns($("#gH"),Object.keys(HL).map(k=>[k,T(HL[k][0],HL[k][1])]),k=>S.hl==k,k=>{S.hl=k;topbar();draw()});
+}
+function match(e){const q=S.q.trim().toLowerCase();return!q||e.s.toLowerCase()==q||e.n.toLowerCase().includes(q)||""+e.z==q}
+function draw(){
+ const m=S.mode,num=!DC[m];
+ TILES.forEach((t,i)=>{const e=EL[i],c=color(e),on=HL[S.hl][2](e)&&match(e)&&(S.iso==null||(!num&&dval(e)==S.iso));
+  t.style.setProperty("--b",c||"var(--na)");t.style.setProperty("--f",c?fg(c):"var(--muted)");t.classList.toggle("na",!c);t.classList.toggle("off",!on);
+  t.querySelector("s").textContent=num?(e[m]==null?"—":fmt(e[m])):e.n;t.classList.toggle("sel",S.sel==e.z)});
+ const tr=TR[m],ch=tr?`<span class="chip">→ ${T("পর্যায়ে","Across period")} ${tr[0]>0?"▲ "+T("বাড়ে","increases"):"▼ "+T("কমে","decreases")}</span><span class="chip">↓ ${T("গ্রুপে","Down group")} ${tr[1]>0?"▲ "+T("বাড়ে","increases"):"▼ "+T("কমে","decreases")}</span>`:"";
+ $("#note").innerHTML=`<b>${T(...MODES[m])}</b> — ${T(NOTE[m][0],NOTE[m][1],1)}${ch}`;
+ const lg=$("#lg");
+ if(num){const[a,b]=RNG[m],u=UN[m];lg.innerHTML=`<span>${fmt(a)} ${u}</span><div class="bar"></div><span>${fmt(b)} ${u}</span><span class="en">· ${T("ধূসর = তথ্য নেই","Grey = no data")}</span>`}
+ else{lg.innerHTML="";Object.keys(DC[m]).forEach(k=>{const d=DC[m][k],n=EL.filter(e=>dval(e)==k).length;if(!n)return;const x=document.createElement("div");x.className="li"+(S.iso==k?" on":"");x.innerHTML=`<i style="background:${d[2]}"></i>${T(d[0],d[1])} <span class="en">${n}</span>`;x.onclick=()=>{S.iso=S.iso==k?null:k;draw()};lg.appendChild(x)})}
+}
+$("#q").oninput=e=>{S.q=e.target.value;draw()};
+$("#q").onkeydown=e=>{if(e.key=="Enter"){const f=EL.find(match);if(f)openEl(f.z)}};
+addEventListener("keydown",e=>{if(e.key=="Escape")closeEl()});
+
+/* drawer + atom model */
+const dr=$("#dr");let cur=null,cc="#999";
+function openEl(z,keep){
+ const e=EL[z-1],col=CATS[e.cat][2],sh=shells(z),L="KLMNOPQ";S.sel=z;cc=col;cur=units(z);
+ const row=(k,v)=>`<dt>${k}</dt><dd>${v}</dd>`,mt=(k,key,u)=>{const v=e[key],mx=RNG[key][1];return`<div class="m"><span>${T(...MODES[key])}</span><div class="tr"><u data-w="${v==null?0:Math.max(3,v/mx*100)}"></u></div><span>${v==null?"—":fmt(v)+" "+u}</span></div>`};
+ dr.innerHTML=`<button id="cl" aria-label="Close">✕</button>
+ <div class="hd"><div class="big" style="background:${col};color:${fg(col)}"><i>${z}</i>${e.s}</div><div><h2>${e.n}</h2><div>${T(CATS[e.cat][0],CATS[e.cat][1])}</div><div class="en">${T("ভর","Mass")} ${e.m} u</div></div></div>
+ <canvas id="bohr" width="520" height="520"></canvas><div class="sh">${sh.map((n,i)=>L[i]+" "+n).join(" · ")}</div>${orbHTML(z)}
+ <dl>${row(T("পর্যায়","Period"),e.per)}${row(T("গ্রুপ","Group"),e.grp||"—")}${row(T("ব্লক","Block"),e.blk)}${row(T("অবস্থা (২৫°C)","State (25 °C)"),T(DC.state[e.st][0],DC.state[e.st][1]))}${row(T("যোজ্যতা e⁻","Valence e⁻"),e.val==null?T("পরিবর্তনশীল","variable"):e.val)}${row(T("ইলেকট্রন বিন্যাস","Configuration"),`<b>${confStr(z)}</b>`)}</dl>
+ ${mt("","rad","pm")}${mt("","ie","kJ/mol")}${mt("","eneg","")}${mt("","ea","kJ/mol")}${mt("","mp","K")}
+ ${e.rad_?`<div class="warn">☢ ${T("তেজস্ক্রিয় মৌল।","Radioactive element.")}</div>`:""}${z>=104?`<div class="warn">${T("অতিভারী কৃত্রিম মৌল: বিন্যাস ও অবস্থা তাত্ত্বিক পূর্বাভাস।","Superheavy synthetic element: configuration and state are theoretical predictions.")}</div>`:""}`;
+ $("#cl").onclick=closeEl;dr.classList.add("open");requestAnimationFrame(()=>requestAnimationFrame(()=>dr.querySelectorAll("u").forEach(u=>u.style.width=u.dataset.w+"%")));
+ if(!keep){const c=e.col,r=e.row;TILES.forEach((t,j)=>{const o=EL[j];t.style.setProperty("--wd",Math.hypot(o.col-c,o.row-r)*38+"ms");t.classList.remove("wave");void t.offsetWidth;t.classList.add("wave")})}
+ draw();
+}
+function closeEl(){dr.classList.remove("open");S.sel=0;cur=null;draw()}
+function bohr(ts){
+ requestAnimationFrame(bohr);const c=$("#bohr");if(!c||!cur)return;const g=c.getContext("2d");g.setTransform(2,0,0,2,0,0);g.clearRect(0,0,260,260);
+ const n=cur.length,gap=n>1?100/(n-1):0,R=i=>n>1?28+i*gap:70,p=1+.12*Math.sin(ts/450);
+ const gr=g.createRadialGradient(130,130,2,130,130,24*p);gr.addColorStop(0,"#fff");gr.addColorStop(.35,cc);gr.addColorStop(1,"transparent");g.fillStyle=gr;g.beginPath();g.arc(130,130,24*p,0,7);g.fill();
+ const mu=getComputedStyle(document.documentElement).getPropertyValue("--muted");
+ cur.forEach((k,i)=>{g.strokeStyle=mu;g.globalAlpha=.4;g.lineWidth=1;g.beginPath();g.arc(130,130,R(i),0,7);g.stroke();g.globalAlpha=1;
+  const m=k.length,r=R(i);for(let j=0;j<m;j++){const a=ts*.0007*(1.7/(i+1))+j*2*Math.PI/m+i*.6,pr=k[j]==2,d=pr?4.6/r:0,pt=(x,c2)=>{g.shadowColor=cc;g.shadowBlur=8;g.fillStyle=c2;g.strokeStyle=cc;g.lineWidth=1.5;g.beginPath();g.arc(130+r*Math.cos(x),130+r*Math.sin(x),3.1,0,7);g.fill();if(c2!=cc)g.stroke();g.shadowBlur=0};
+  if(pr){g.strokeStyle=cc;g.globalAlpha=.55;g.lineWidth=1.3;g.beginPath();g.arc(130,130,r,a-d,a+d);g.stroke();g.globalAlpha=1;pt(a-d,cc);pt(a+d,"#fff")}else{g.globalAlpha=.5+.5*Math.sin(ts/240+j+i);pt(a,cc);g.globalAlpha=1}}});
+}
+topbar();draw();requestAnimationFrame(bohr);
+</script>
+</body>
+</html>
